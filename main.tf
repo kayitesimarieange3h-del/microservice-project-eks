@@ -10,11 +10,9 @@ provider "aws" {
 # Blok ini adalah "resep" yang dimana untuk membuat satu resource,
 # dalam hal ini sebuah S3 bucket (tempat penyimpanan file).
 resource "aws_s3_bucket" "app_bucket" {
-  # PENTING: 'bucket' adalah nama unik global untuk S3 bucket Anda.
-  # Ganti dengan nama yang benar-benar unik.
   bucket = "99group-challenge-bucket-ryan-54321"
 
-  # 'tags' adalah label untuk mengorganisir dan mengidentifikasi resource Anda.
+  # 'tags' adalah label untuk mengorganisir dan mengidentifikasi resource
   tags = {
     Name        = "DevOps Challenge Bucket"
     Environment = "Development"
@@ -24,7 +22,7 @@ resource "aws_s3_bucket" "app_bucket" {
 
 # --- Output: Menampilkan Nama Bucket ---
 # Blok ini digunakan untuk menampilkan nilai tertentu (seperti nama bucket)
-# setelah Terraform berhasil membuat resource, akan sangat berguna untuk verifikasi.
+# setelah Terraform berhasil membuat resource, akan sangat berguna untuk verifikasi
 output "bucket_name" {
   value       = aws_s3_bucket.app_bucket.bucket
   description = "The name of the S3 bucket created."
