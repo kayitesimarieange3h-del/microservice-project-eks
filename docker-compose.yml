@@ -1,96 +1,61 @@
-# version is now using "compose spec"
-# v2 and v3 are now combined!
-# docker-compose v1.27+ required
+# Menentukan versi syntax Docker Compose yang digunakan
+version: '3.8'
 
+# Mendefinisikan semua layanan (container) yang akan dijalankan
 services:
+
+  # Layanan untuk antarmuka voting (frontend)
   vote:
-    build: 
-      context: ./vote
-      target: dev
-    depends_on:
-      redis:
-        condition: service_healthy
-    healthcheck: 
-      test: ["CMD", "curl", "-f", "http://localhost"]
-      interval: 15s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
-    volumes:
-     - ./vote:/usr/local/app
+    # Membangun image dari Dockerfile di dalam folder ./vote
+    build: ./vote
+    # Memetakan port 5000 di komputer Anda ke port 80 di dalam container
     ports:
-      - "8080:80"
+      - "5000:80"
+    # Menghubungkan layanan ini ke jaringan 'vote-net'
     networks:
-      - front-tier
-      - back-tier
+      - vote-net
 
-  result:
-    build: ./result
-    # use nodemon rather than node for local dev
-    entrypoint: nodemon --inspect=0.0.0.0 server.js
-    depends_on:
-      db:
-        condition: service_healthy 
-    volumes:
-      - ./result:/usr/local/app
-    ports:
-      - "8081:80"
-      - "127.0.0.1:9229:9229"
-    networks:
-      - front-tier
-      - back-tier
-
-  worker:
-    build:
-      context: ./worker
-    depends_on:
-      redis:
-        condition: service_healthy 
-      db:
-        condition: service_healthy 
-    networks:
-      - back-tier
-
+  # Layanan untuk database Redis (antrian pesan)
   redis:
+    # Menggunakan image Redis resmi yang ringan
     image: redis:alpine
-    volumes:
-      - "./healthchecks:/healthchecks"
-    healthcheck:
-      test: /healthchecks/redis.sh
-      interval: "5s"
     networks:
-      - back-tier
+      - vote-net
 
+  # Layanan worker (backend) yang memproses vote
+  worker:
+    # Membangun image dari Dockerfile di dalam folder ./worker
+    build: ./worker
+    # Menghubungkan ke jaringan yang sama
+    networks:
+      - vote-net
+
+  # Layanan untuk database PostgreSQL (penyimpanan data)
   db:
-    image: postgres:15-alpine
-    environment:
-      POSTGRES_USER: "postgres"
-      POSTGRES_PASSWORD: "postgres"
+    # Menggunakan image PostgreSQL versi 9.4
+    image: postgres:9.4
+    # Menyimpan data database secara permanen di volume 'db-data'
     volumes:
       - "db-data:/var/lib/postgresql/data"
-      - "./healthchecks:/healthchecks"
-    healthcheck:
-      test: /healthchecks/postgres.sh
-      interval: "5s"
+    # Pengaturan environment untuk koneksi yang lebih mudah (hanya untuk development)
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
     networks:
-      - back-tier
+      - vote-net
 
-  # this service runs once to seed the database with votes
-  # it won't run unless you specify the "seed" profile
-  # docker compose --profile seed up -d
-  seed:
-    build: ./seed-data
-    profiles: ["seed"]
-    depends_on:
-      vote:
-        condition: service_healthy 
+  # Layanan untuk menampilkan hasil voting
+  result:
+    # Membangun image dari Dockerfile di dalam folder ./result
+    build: ./result
+    ports:
+      - "5001:80"
     networks:
-      - front-tier
-    restart: "no"
+      - vote-net
 
+# Mendefinisikan jaringan agar semua container bisa saling berkomunikasi
+networks:
+  vote-net:
+
+# Mendefinisikan volume untuk penyimpanan data persisten
 volumes:
   db-data:
-
-networks:
-  front-tier:
-  back-tier:
