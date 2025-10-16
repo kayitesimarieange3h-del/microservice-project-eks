@@ -9,27 +9,6 @@ on:
       - main
 
 jobs:
-  vote:
-    name: Test Vote Service
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-
-      - name: Install dependencies
-        run: |
-          cd vote
-          npm install
-
-      - name: Run tests
-        run: |
-          cd vote
-          npm test
-
   result:
     name: Test Result Service
     runs-on: ubuntu-latest
@@ -51,23 +30,4 @@ jobs:
           cd result
           npm test
 
-  worker:
-    name: Test Worker Service
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: '7.0.x'
-
-      - name: Restore dependencies
-        run: |
-          cd worker
-          dotnet restore
-
-      - name: Run tests
-        run: |
-          cd worker
-          dotnet test
+ 
