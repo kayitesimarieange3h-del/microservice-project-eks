@@ -1,29 +1,29 @@
-# Build stage
+# Membangun sebuah stage untuk menginstal dependensi
 FROM python:3.9-slim AS builder
 
 WORKDIR /app
 
-# Install dependencies in a virtual environment
+# Meng-install dependensi di virtual environment
 COPY requirements.txt .
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Final stage
+# Stage akhir untuk menjalankan aplikasi
 FROM python:3.9-slim
 
 WORKDIR /app
 
-# Copy virtual environment from builder
+# Meng-copy virtual environment dari stage builder
 COPY --from=builder /opt/venv /opt/venv
 
-# Copy application code
+# Meng-copy kode aplikasi
 COPY . .
 
-# Set PATH to use virtual environment
+# Menetapkan PATH untuk menggunakan virtual environment
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Create non-root user
+# Membuat user non-root
 RUN useradd -m appuser && chown -R appuser:appuser /app
 USER appuser
 

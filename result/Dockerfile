@@ -1,25 +1,28 @@
-FROM node:18-slim
+# Multi-stage build
+FROM node:18-alpine AS builder
 
-# add curl for healthcheck
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl tini && \
-    rm -rf /var/lib/apt/lists/*
+WORKDIR /app
 
-WORKDIR /usr/local/app
-
-# have nodemon available for local dev use (file watching)
-RUN npm install -g nodemon
-
+# Copy package files
 COPY package*.json ./
+RUN npm ci --only=production
 
-RUN npm ci && \
- npm cache clean --force && \
- mv /usr/local/app/node_modules /node_modules
+# Final stage
+FROM node:18-alpine
 
+WORKDIR /app
+
+# Copy dependencies and source
+COPY --from=builder /app/node_modules ./node_modules
 COPY . .
 
-ENV PORT=80
+# Non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001 && \
+    chown -R nodejs:nodejs /app
+
+USER nodejs
+
 EXPOSE 80
 
-ENTRYPOINT ["/usr/bin/tini", "--"]
 CMD ["node", "server.js"]
