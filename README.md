@@ -51,3 +51,5 @@ Pastikan Anda sudah menginstall **Docker** dan **Docker Compose** di komputer An
 * **Deployment Otomatis (CD)**: Membuat *workflow* terpisah untuk melakukan *deployment* otomatis ke lingkungan *staging* atau produksi (misalnya ke Kubernetes di AWS EKS) setelah tes CI berhasil
 * **Implementasi Monitoring**: Menerapkan tumpukan monitoring (Prometheus, Grafana, Loki) secara nyata menggunakan Docker Compose agar bisa langsung diuji dan dilihat hasilnya
 * **Manajemen Rahasia (Secrets)**: Menggunakan alat seperti HashiCorp Vault atau AWS Secrets Manager untuk mengelola kredensial database
+
+**[Tonton Video Penjelasan di Google Drive](https://drive.google.com/file/d/1x33fz4TJ9i-fSgA2QyV70XDVj9yshVQU/view?usp=drivesdk)**
