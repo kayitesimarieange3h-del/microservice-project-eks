@@ -1,9 +1,9 @@
-# AWS Provider configuration
+# konfig untuk provider AWS
 provider "aws" {
   region = "ap-southeast-1"
 }
 
-# S3 bucket for storing Docker images or artifacts
+# S3 bucket untuk menyimpan Docker images or artefak
 resource "aws_s3_bucket" "artifacts" {
   bucket = "99group-voting-app-artifacts-${random_id.suffix.hex}"
   
@@ -14,7 +14,7 @@ resource "aws_s3_bucket" "artifacts" {
   }
 }
 
-# Enable versioning for the S3 bucket
+# mengaktifkan versi untuk bucket S3
 resource "aws_s3_bucket_versioning" "artifacts" {
   bucket = aws_s3_bucket.artifacts.id
   
@@ -23,12 +23,12 @@ resource "aws_s3_bucket_versioning" "artifacts" {
   }
 }
 
-# Random suffix for unique bucket naming
+# suffiks acak untuk menamai bucket yang unik
 resource "random_id" "suffix" {
   byte_length = 4
 }
 
-# EC2 instance to host Docker (optional)
+# EC2 instance untuk meng-host Docker (opsional)
 resource "aws_instance" "docker_host" {
   ami           = "ami-0c55b159cbfafe1f0" # Amazon Linux 2
   instance_type = "t2.micro"
@@ -52,7 +52,7 @@ resource "aws_instance" "docker_host" {
   }
 }
 
-# Security group for Docker host
+# Grup security untuk Docker host
 resource "aws_security_group" "docker_host" {
   name        = "docker-host-sg"
   description = "Security group for Docker host"
