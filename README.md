@@ -1,65 +1,141 @@
-# Example Voting App
+# 99Group Voting App - Role Challenge 
 
-A simple distributed application running across multiple Docker containers.
+Aplikasi terdiri dari 5 service utama:
 
-## Getting started
+1. Vote: Web berbasis Flask (Python) untuk memberi suara
+2. Result: Web berbasis Node.js untuk menampilkan hasil
+3. Worker: Berbasis .NET yang memproses suara
+4. Redis: Menyimpan antrian vote sementara (in-memory queue)
+5. PostgreSQL: Database untuk penyimpanan permanen hasil vote
 
-Download [Docker Desktop](https://www.docker.com/products/docker-desktop) for Mac or Windows. [Docker Compose](https://docs.docker.com/compose) will be automatically installed. On Linux, make sure you have the latest version of [Compose](https://docs.docker.com/compose/install/).
+---
 
-This solution uses Python, Node.js, .NET, with Redis for messaging and Postgres for storage.
+How to do it
 
-Run in this directory to build and run the app:
+- Docker & Docker Compose terinstal
+- Git
 
-```shell
-docker compose up
+Menjalankan secara lokal
+
+```bash
+git clone https://github.com/sblrm/example-voting-app.git
+cd example-voting-app
+docker-compose up --build
 ```
 
-The `vote` app will be running at [http://localhost:8080](http://localhost:8080), and the `results` will be at [http://localhost:8081](http://localhost:8081).
+Akses aplikasi di browser:
 
-Alternately, if you want to run it on a [Docker Swarm](https://docs.docker.com/engine/swarm/), first make sure you have a swarm. If you don't, run:
+* Vote App: [http://localhost:5000](http://localhost:5000)
+* Result App: [http://localhost:5001](http://localhost:5001)
 
-```shell
-docker swarm init
+---
+
+CI/CD Pipeline
+
+Menggunakan GitHub Actions untuk otomatisasi:
+
+1. Menjalankan pipeline setiap push/PR ke branch `main`
+2. Menjalankan unit test untuk service `vote` dan `result`
+3. Build image Docker untuk memvalidasi
+
+Keuntungan: otomatisasi testing dan build sehingga mempermudah collaborate dan deployment
+
+---
+
+Praktik Docker yang Diterapkan
+
+1. Multi-Stage Build: mengurangi ukuran image hingga 70%
+2. Non-root User: meningkatkan keamanan container
+3. Base Image Minimal (Alpine): mempercepat deployment
+4. Health Checks: memantau status container
+5. .dockerignore: menghindari agar file tidak penting masuk ke image
+
+---
+
+Infrastruktur sebagai Kode (IaC)
+
+Menggunakan Terraform untuk provisioning resource seperti:
+
+* S3 Bucket untuk penyimpanan artefak
+* EC2 Instance sebagai host Docker
+* Security Group untuk pengaturan akses jaringan
+
+```bash
+cd terraform
+terraform init
+terraform plan
+terraform apply
 ```
 
-Once you have your swarm, in this directory run:
+---
 
-```shell
-docker stack deploy --compose-file docker-stack.yml vote
+Strategi Monitoring
+
+Aplikasi ini menggunakan stack open-source untuk monitoring dasar:
+
+1. Prometheus: pengumpulan metrik
+2. Grafana: visualisasi metrik
+3. Loki: pengelolaan log
+4. AlertManager: notifikasi alert
+
+Metrik utama yang dipantau:
+
+1. Laju permintaan (Request Rate)
+2. Waktu respon (Latency)
+3. Error Rate (4xx & 5xx)
+4. Penggunaan resource (CPU, Memory)
+5. Container health (status, restarts)
+
+Detail konfigurasi monitoring tersedia di file [`monitoring_plan.md`](monitoring_plan.md)
+
+---
+
+Alasan Desain
+
+1. Multi-stage Build: Image lebih ringan dan aman
+2. Docker Compose Networks: Keamanan antar service
+3. GitHub Actions CI/CD: Otomatisasi testing dan build
+4. Terraform: Infrastruktur reproducible
+5. Alpine Image: Deployment lebih cepat dan efisien
+
+---
+
+Rencana Pengembangan Selanjutnya
+
+- Jangka Pendek (1–2 Minggu)
+
+1. Tambahkan endpoint `/health` dan `/ready` untuk health check
+2. Implementasi monitoring sederhana dengan Prometheus + Grafana
+3. Penambahan log aggregation dengan Loki
+
+- Jangka Menengah (1–2 Bulan)
+
+1. Helm chart untuk deployment Kubernetes
+2. Staging environment dengan docker-compose terpisah
+3. Pengelolaan secrets menggunakan AWS Secrets Manager
+
+- Jangka Panjang (3–6 Bulan)
+
+1. Migrasi ke Kubernetes
+2. Implementasi service mesh (Istio)
+3. Distributed tracing (Jaeger)
+4. GitOps workflow (ArgoCD)
+
+---
+
+Testing
+
+```bash
+docker-compose build
+docker-compose up -d
+curl http://localhost:5000  # Halaman voting
+curl http://localhost:5001  # Halaman hasil voting
 ```
 
-## Run the app in Kubernetes
+---
 
-The folder k8s-specifications contains the YAML specifications of the Voting App's services.
+Pemeliharaan & Backup
 
-Run the following command to create the deployments and services. Note it will create these resources in your current namespace (`default` if you haven't changed it.)
-
-```shell
-kubectl create -f k8s-specifications/
-```
-
-The `vote` web app is then available on port 31000 on each host of the cluster, the `result` web app is available on port 31001.
-
-To remove them, run:
-
-```shell
-kubectl delete -f k8s-specifications/
-```
-
-## Architecture
-
-![Architecture diagram](architecture.excalidraw.png)
-
-* A front-end web app in [Python](/vote) which lets you vote between two options
-* A [Redis](https://hub.docker.com/_/redis/) which collects new votes
-* A [.NET](/worker/) worker which consumes votes and stores them in…
-* A [Postgres](https://hub.docker.com/_/postgres/) database backed by a Docker volume
-* A [Node.js](/result) web app which shows the results of the voting in real time
-
-## Notes
-
-The voting application only accepts one vote per client browser. It does not register additional votes if a vote has already been submitted from a client.
-
-This isn't an example of a properly architected perfectly designed distributed app... it's just a simple
-example of the various types of pieces and languages you might see (queues, persistent data, etc), and how to
-deal with them in Docker at a basic level.
+1. Backup database otomatis ke S3
+2. Konfigurasi tersimpan di Git (version control)
+3. Secrets dikelola dengan aman di AWS Secrets Manager
