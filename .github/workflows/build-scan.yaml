@@ -45,7 +45,7 @@ jobs:
       # --- Install Sysdig Scanner ---
       - name: Install Sysdig CLI Scanner
         run: |
-          curl -LO https://download.sysdig.com/scanning/sysdig-cli-scanner/latest/sysdig-cli-scanner-linux-amd64
+          curl -LO curl -LO "https://download.sysdig.com/scanning/bin/sysdig-cli-scanner/$(curl -L -s https://download.sysdig.com/scanning/sysdig-cli-scanner/latest_version.txt)/linux/arm64/sysdig-cli-scanner"
           chmod +x sysdig-cli-scanner-linux-amd64
           sudo mv sysdig-cli-scanner-linux-amd64 /usr/local/bin/sysdig-cli-scanner
           sysdig-cli-scanner --version
