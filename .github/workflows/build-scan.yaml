@@ -1,0 +1,111 @@
+name: Build & Scan Containers
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  security-events: write   # if need to upload SARIF or similar
+
+jobs:
+  build-and-scan:
+    runs-on: ubuntu-latest
+    env:
+      REGISTRY_HOST: ghcr.io
+      REGISTRY_NAMESPACE: myorg          # change to your org/user
+      VOTE_IMAGE: ${{ env.REGISTRY_HOST }}/${{ env.REGISTRY_NAMESPACE }}/vote:latest
+      WORKER_IMAGE: ${{ env.REGISTRY_HOST }}/${{ env.REGISTRY_NAMESPACE }}/worker:latest
+      RESULT_IMAGE: ${{ env.REGISTRY_HOST }}/${{ env.REGISTRY_NAMESPACE }}/result:latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      # Build vote
+      - name: Build vote image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./vote
+          file: ./vote/Dockerfile
+          tags: ${{ env.VOTE_IMAGE }}
+          push: false
+          load: true
+
+      # Build worker
+      - name: Build worker image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./worker
+          file: ./worker/Dockerfile
+          tags: ${{ env.WORKER_IMAGE }}
+          push: false
+          load: true
+
+      # Build result
+      - name: Build result image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./result
+          file: ./result/Dockerfile
+          tags: ${{ env.RESULT_IMAGE }}
+          push: false
+          load: true
+
+      # Run scan for vote
+      - name: Scan vote image
+        run: |
+          ./your-cli-scanner image ${{ env.VOTE_IMAGE }} --fail-on-findings
+        # optionally env vars, secrets, etc
+
+      # Run scan for worker
+      - name: Scan worker image
+        run: |
+          ./your-cli-scanner image ${{ env.WORKER_IMAGE }} --fail-on-findings
+
+      # Run scan for result
+      - name: Scan result image
+        run: |
+          ./your-cli-scanner image ${{ env.RESULT_IMAGE }} --fail-on-findings
+
+      # (Optional) push images if scans passed
+      - name: Login to registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY_HOST }}
+          username: ${{ secrets.REGISTRY_USER }}
+          password: ${{ secrets.REGISTRY_TOKEN }}
+
+      - name: Push vote image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./vote
+          file: ./vote/Dockerfile
+          tags: ${{ env.VOTE_IMAGE }}
+          push: true
+          load: false
+
+      - name: Push worker image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./worker
+          file: ./worker/Dockerfile
+          tags: ${{ env.WORKER_IMAGE }}
+          push: true
+          load: false
+
+      - name: Push result image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./result
+          file: ./result/Dockerfile
+          tags: ${{ env.RESULT_IMAGE }}
+          push: true
+          load: false
