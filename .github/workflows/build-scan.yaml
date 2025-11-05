@@ -62,7 +62,13 @@ jobs:
       
       
       # --- Scan images ---
-      
+      - name: Debug environment variables
+        run: |
+          echo "REGISTRY_USER = $REGISTRY_USER"
+          echo "REPO = $REPO"
+          echo "SYSDIG_SECURE_URL = $SYSDIG_SECURE_URL"
+          echo "SYSDIG_SECURE_TOKEN = $SYSDIG_SECURE_TOKEN"
+
       - name: Scan vote image
         env:
           SYSDIG_SECURE_URL: ${{ secrets.SYSDIG_SECURE_URL }}
