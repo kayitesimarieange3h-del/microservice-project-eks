@@ -59,18 +59,30 @@ jobs:
       #     sudo mv sysdig-cli-scanner-linux-amd64 /usr/local/bin/sysdig-cli-scanner
       #     sysdig-cli-scanner --version
 
+      
+      
       # --- Scan images ---
+      
       - name: Scan vote image
+        env:
+          SYSDIG_SECURE_URL: ${{ secrets.SYSDIG_SECURE_URL }}
+          SYSDIG_SECURE_TOKEN: ${{ secrets.SYSDIG_SECURE_TOKEN }}
         run: |
-          sysdig-cli-scanner --apiurl $SYSDIG_SECURE_URL --token $SYSDIG_SECURE_TOKEN $REGISTRY/$REPO/vote:latest
+          sysdig-cli-scanner docker.io/$REPO/vote:latest
 
       - name: Scan worker image
+        env:
+          SYSDIG_SECURE_URL: ${{ secrets.SYSDIG_SECURE_URL }}
+          SYSDIG_SECURE_TOKEN: ${{ secrets.SYSDIG_SECURE_TOKEN }}
         run: |
-          sysdig-cli-scanner --apiurl $SYSDIG_SECURE_URL --token $SYSDIG_SECURE_TOKEN $REGISTRY/$REPO/worker:latest
+          sysdig-cli-scanner docker.io/$REPO/worker:latest
 
       - name: Scan result image
+        env:
+          SYSDIG_SECURE_URL: ${{ secrets.SYSDIG_SECURE_URL }}
+          SYSDIG_SECURE_TOKEN: ${{ secrets.SYSDIG_SECURE_TOKEN }}
         run: |
-          sysdig-cli-scanner --apiurl $SYSDIG_SECURE_URL --token $SYSDIG_SECURE_TOKEN $REGISTRY/$REPO/result:latest
+          sysdig-cli-scanner docker.io/$REPO/result:latest
 
       # --- Optional: Push images to Docker Hub (only if scans passed) ---
       - name: Push vote image
