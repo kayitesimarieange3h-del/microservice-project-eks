@@ -52,7 +52,7 @@ jobs:
           sysdig-cli-scanner --version
       
       
-      # --- Scan images ---
+      # --- Environment images ---
       - name: Debug environment variables
         env:
           REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
