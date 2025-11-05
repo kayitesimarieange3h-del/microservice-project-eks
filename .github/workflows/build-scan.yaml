@@ -97,16 +97,16 @@ jobs:
         run: |
           sysdig-cli-scanner -a https://app.us4.sysdig.com/secure pull://docker.io/$REPO/examplevotingapp_result:latest || true
 
-      # # --- Optional: Push images to Docker Hub (only if scans passed) ---
-      - name: Push vote image
-        run: docker push docker.io/cloudcode510/examplevotingapp_vote:latest
-      #   run: docker push $REGISTRY/$REPO/examplevotingapp_vote:latest
+      # # # --- Optional: Push images to Docker Hub (only if scans passed) ---
+      # - name: Push vote image
+      #   run: docker push docker.io/cloudcode510/examplevotingapp_vote:latest
+      # #   run: docker push $REGISTRY/$REPO/examplevotingapp_vote:latest
 
-      - name: Push worker image
-        run: docker push docker.io/cloudcode510/examplevotingapp_worker:latest
-
-      - name: Push result image
-        run: docker push docker.io/cloudcode510/examplevotingapp_result:latest
+      # - name: Push worker image
+      #   run: docker push docker.io/cloudcode510/examplevotingapp_worker:latest
 
       # - name: Push result image
-      #   run: docker push $REGISTRY/$REPO/examplevotingapp_result:latest
+      #   run: docker push docker.io/cloudcode510/examplevotingapp_result:latest
+
+      # # - name: Push result image
+      # #   run: docker push $REGISTRY/$REPO/examplevotingapp_result:latest
