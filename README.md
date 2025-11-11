@@ -73,20 +73,20 @@ This section provides additional help for users who are new to Docker and may fa
 Cause: Docker Compose is not installed or not linked properly.
 Fix (for Linux users):
 
-sudo apt install docker-compose
+`sudo apt install docker-compose`
 
 After installation, verify using:
 
-docker compose version
+`docker compose version`
 
 2. Containers fail to start or exit immediately
 
 Cause: A required image or service may have failed to build.
 Fix:
 
-docker compose down
-docker compose build --no-cache
-docker compose up
+`docker compose down`
+`ocker compose build --no-cache`
+`ocker compose up`
 
 3. “Port already in use” error
 
@@ -95,7 +95,7 @@ Fix:
 
 Stop all running containers:
 
-docker stop $(docker ps -q)
+`ocker stop $(docker ps -q)`
 
 Or, change the ports in the docker-compose.yml file before running again.
 
@@ -108,12 +108,11 @@ On Windows/Mac, open Docker Desktop and wait until it says “Docker is running�
 
 On Linux, start Docker manually:
 
-sudo systemctl start docker
+`udo systemctl start docker`
 
 
 Then try running:
-
-docker ps
+`docker ps`
 
 
 to verify that Docker is running.
@@ -123,7 +122,7 @@ to verify that Docker is running.
 Cause: Your user account doesn’t have permission to run Docker commands.
 Fix:
 
-sudo usermod -aG docker $USER
+`sudo usermod -aG docker $USER`
 
 6. Cannot access http://localhost:8080 or http://localhost:8081
 
@@ -132,19 +131,19 @@ Fix:
 
 Check the container status:
 
-docker ps
+`docker ps`
 
 
 If they aren’t running, restart the app:
 
-docker compose up
+`docker compose up`
 
 7. Reset the environment completely
 
 If you want to start fresh (remove all containers, images, and volumes):
 
-docker compose down --volumes
-docker system prune -a
+`docker compose down --volumes`
+`docker system prune -a`
 
 
 ### Verify Installation
@@ -153,6 +152,6 @@ Before running the app, make sure both Docker and Docker Compose are installed c
 
 Check by running these commands:
 
-docker --version
-docker compose version
+`docker --version`
+`docker compose version`
 
