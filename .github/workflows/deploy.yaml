@@ -21,7 +21,7 @@ jobs:
       - uses: azure/aks-set-context@v3
         with:
           resource-group: VotingApp
-          cluster-name: voting-app-cluster
+          cluster-name: VotingAppCluster
 
       # Deploy the App (Manifests)
       - name: Deploy to Kubernetes
