@@ -40,9 +40,8 @@ jobs:
         env:
           SECURE_API_TOKEN: ${{ secrets.SYSDIG_SECURE_TOKEN }}
         run: |
-          chmod +x ./sysdig-cli-scanner
           ./sysdig-cli-scanner \
-            --apiurl https://secure.sysdig.com \
+            --standalone \
             --output vote-scan.json \
             docker://vote-app:latest
 
@@ -50,9 +49,8 @@ jobs:
         env:
           SECURE_API_TOKEN: ${{ secrets.SYSDIG_SECURE_TOKEN }}
         run: |
-          chmod +x ./sysdig-cli-scanner
           ./sysdig-cli-scanner \
-            --apiurl https://secure.sysdig.com \
+            --standalone \
             --output worker-scan.json \
             docker://worker-app:latest
 
@@ -60,9 +58,8 @@ jobs:
         env:
           SECURE_API_TOKEN: ${{ secrets.SYSDIG_SECURE_TOKEN }}
         run: |
-          chmod +x ./sysdig-cli-scanner
           ./sysdig-cli-scanner \
-            --apiurl https://secure.sysdig.com \
+            --standalone \
             --output result-scan.json \
             docker://result-app:latest
 
