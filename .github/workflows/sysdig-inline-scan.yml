@@ -4,16 +4,13 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-scan-images:
+  scan-images:
     runs-on: ubuntu-latest
 
     steps:
-
-      #1 Checkout code
-      - name: Check out repository
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      #2 Build Docker images
       - name: Build vote image
         run: docker build -t vote-app:latest ./vote
 
@@ -23,15 +20,17 @@ jobs:
       - name: Build result image
         run: docker build -t result-app:latest ./result
 
-      #3 Scan vote image with Sysdig
-      - name: Scan vote image
+      # Scan vote image
+      - name: Scan vote image (standalone)
         id: scan-vote
-        uses: sysdiglabs/scan-action@v5
+        uses: sysdiglabs/scan-action@v6
         with:
           image-tag: vote-app:latest
-          sysdig-secure-token: ${{ secrets.SYSDIG_SECURE_TOKEN }}
-          stop-on-failed-policy-eval: true
+          standalone: true
+          db-path: ./sysdig-db
           stop-on-processing-error: true
+          skip-upload: false
+          sysdig-secure-token: ${{ secrets.SYSDIG_SECURE_TOKEN }}
 
       - name: Upload vote SARIF
         if: success() || failure()
@@ -39,15 +38,17 @@ jobs:
         with:
           sarif_file: ${{ github.workspace }}/sarif.json
 
-      #4 Scan worker image
-      - name: Scan worker image
+      # Scan worker image
+      - name: Scan worker image (standalone)
         id: scan-worker
-        uses: sysdiglabs/scan-action@v5
+        uses: sysdiglabs/scan-action@v6
         with:
           image-tag: worker-app:latest
-          sysdig-secure-token: ${{ secrets.SYSDIG_SECURE_TOKEN }}
-          stop-on-failed-policy-eval: true
+          standalone: true
+          db-path: ./sysdig-db
           stop-on-processing-error: true
+          skip-upload: false
+          sysdig-secure-token: ${{ secrets.SYSDIG_SECURE_TOKEN }}
 
       - name: Upload worker SARIF
         if: success() || failure()
@@ -55,15 +56,17 @@ jobs:
         with:
           sarif_file: ${{ github.workspace }}/sarif.json
 
-      #5 Scan result image
-      - name: Scan result image
+      # Scan result image
+      - name: Scan result image (standalone)
         id: scan-result
-        uses: sysdiglabs/scan-action@v5
+        uses: sysdiglabs/scan-action@v6
         with:
           image-tag: result-app:latest
-          sysdig-secure-token: ${{ secrets.SYSDIG_SECURE_TOKEN }}
-          stop-on-failed-policy-eval: true
+          standalone: true
+          db-path: ./sysdig-db
           stop-on-processing-error: true
+          skip-upload: false
+          sysdig-secure-token: ${{ secrets.SYSDIG_SECURE_TOKEN }}
 
       - name: Upload result SARIF
         if: success() || failure()
