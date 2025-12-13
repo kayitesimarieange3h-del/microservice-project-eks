@@ -74,13 +74,16 @@ def cast_vote_api():
             
             # 1. Get the full W3C header for propagation via Redis
             traceparent = get_current_traceparent()
-            # 2. Get the raw Trace ID (without prefixes) for Dynatrace log correlation
+            
+            # 2. Extract the raw Trace ID from the TRACEPARENT for local logging
+            # This calls get_current_traceparent() and splits the ID.
             trace_id_for_log = get_current_trace_id_raw()
             
             app.logger.info('Vote received via API', extra={
                 'vote': vote, 
                 'voter_id': voter_id,
-                # FIX: Log only the raw trace ID for Dynatrace correlation
+                # FIX APPLIED: Log the Trace ID derived from the same trace context
+                # that is successfully being propagated to Redis.
                 'traceparent_generated': trace_id_for_log if trace_id_for_log else "null" 
             })
 

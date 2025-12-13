@@ -48,7 +48,7 @@ def start_trace_span(span_name):
 def get_current_traceparent():
     """
     Returns the W3C traceparent header representing the current span, 
-    manually generating one if the agent is not reporting (trace_id=0).
+    relying solely on the active trace context.
     """
     propagator = TraceContextTextMapPropagator()
     carrier = {}
@@ -58,18 +58,12 @@ def get_current_traceparent():
     
     w3c_header = carrier.get("traceparent", None)
     
-    # Fallback/Guard: If the header is missing or all zeros (agent not hooked), 
-    # manually generate a valid W3C header for propagation continuity.
+    # FIX APPLIED: Remove the manual trace generation and rely on the active span's context.
+    # If the context is missing or all zeros, return None to avoid polluting the trace.
     if not w3c_header or w3c_header.endswith("-0000000000000000-01"):
-        try:
-            trace_id = hex(random.getrandbits(128))[2:].zfill(32)
-            span_id = hex(random.getrandbits(64))[2:].zfill(16)
-            w3c_header = f"00-{trace_id}-{span_id}-01"
-            trace_logger.warning("Manually generating W3C traceparent for failed context injection.")
-        except Exception as e:
-            trace_logger.error(f"Failed manual trace generation: {e}")
-            return None
-    
+        trace_logger.warning("W3C traceparent missing or zeroed. Propagation disabled.")
+        return None
+        
     return w3c_header
 
 
@@ -81,12 +75,12 @@ def get_current_trace_id_raw():
     Extracts the raw 32-character Trace ID from the current W3C context 
     for Dynatrace log correlation.
     """
+    # Call get_current_traceparent() to ensure the trace is active first.
     w3c_traceparent = get_current_traceparent()
     
     if w3c_traceparent:
         try:
             # W3C format is: 00-TRACEID-SPANID-01
-            # The raw Trace ID is the second segment.
             raw_trace_id = w3c_traceparent.split('-')[1]
             return raw_trace_id
         except IndexError:
