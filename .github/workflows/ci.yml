@@ -1,0 +1,30 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+
+      - name: Install dependecies (vote app)
+        run: |
+            cd vote
+            pip install -r requirement.txt
+      
+      - name: Run simple test
+        run: |
+            cd vote
+            python -m py_compile app.py
