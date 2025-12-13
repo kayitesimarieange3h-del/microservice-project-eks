@@ -36,6 +36,7 @@ namespace Worker
                 var keepAliveCommand = pgsql.CreateCommand();
                 keepAliveCommand.CommandText = "SELECT 1";
 
+                // Ensure the anonymous type definition includes the 'traceparent' field
                 var definition = new { vote = "", voter_id = "", traceparent = "" };
 
                 // -------------------------------
@@ -63,19 +64,28 @@ namespace Worker
                         // -------------------------------
                         using (var activity = new Activity("Worker.ProcessVote"))
                         {
-                            // --- CRITICAL FIX FOR TRACE STITCHING ---
+                            // --- FINAL CRITICAL FIX: Direct W3C Header Injection ---
                             if (!string.IsNullOrEmpty(vote.traceparent))
                             {
-                                // The most reliable way: Tell the Activity object to parse the 
-                                // full W3C string (00-TraceId-SpanId-01) and set itself as the child.
-                                activity.SetParentId(vote.traceparent);
+                                try 
+                                {
+                                    // SetParentId(string) attempts to parse the W3C traceparent header 
+                                    // and set the current Activity's TraceId and ParentSpanId.
+                                    activity.SetParentId(vote.traceparent);
+                                }
+                                catch (Exception ex)
+                                {
+                                     // If linking fails (e.g., malformed header), log the failure.
+                                     // The activity will proceed and start a new root trace, 
+                                     // which is better than crashing.
+                                     Log.Error(ex, "Failed to set parent trace ID from Redis payload: {Traceparent}", vote.traceparent);
+                                }
                             }
-                            // ----------------------------------------
+                            // ---------------------------------------------------------
                             
-                            activity.Start(); // Start the span. OneAgent will pick this up.
+                            activity.Start(); // Start the span.
 
-                            // Log context
-                            // The TraceId here will now match the Python Trace ID if the SetParentId succeeded.
+                            // Log context - The TraceId here MUST now match the Python Trace ID.
                             Log.ForContext("traceId", activity.TraceId.ToString())
                                .ForContext("spanId", activity.SpanId.ToString())
                                .Information(
@@ -113,7 +123,7 @@ namespace Worker
         }
 
         // -------------------------------------------------
-        // Helpers
+        // Helpers (Unchanged)
         // -------------------------------------------------
 
         private static NpgsqlConnection OpenDbConnection(string connectionString)
