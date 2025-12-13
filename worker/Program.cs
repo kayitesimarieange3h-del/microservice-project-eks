@@ -5,13 +5,11 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-// Removed unnecessary Host and DI usings
 using Newtonsoft.Json;
 using Npgsql;
 using Serilog;
 using Serilog.Formatting.Json;
 using StackExchange.Redis;
-// Removed unnecessary OpenTelemetry SDK usings
 
 namespace Worker
 {
@@ -28,9 +26,6 @@ namespace Worker
 
             try
             {
-                // NO HOST.CREATEDEFAULTBUILDER BLOCK. 
-                // We rely on the Dynatrace OneAgent to hook into System.Diagnostics.Activity at runtime.
-                
                 // -------------------------------
                 // Worker infrastructure
                 // -------------------------------
@@ -64,30 +59,23 @@ namespace Worker
                         var vote = JsonConvert.DeserializeAnonymousType(json, definition);
 
                         // -------------------------------
-                        // Extract parent trace context
-                        // -------------------------------
-                        ActivityContext parentContext = default;
-
-                        if (!string.IsNullOrEmpty(vote.traceparent))
-                        {
-                            // ActivityContext.Parse is a native .NET primitive that handles the W3C format.
-                            parentContext = ActivityContext.Parse(vote.traceparent, null);
-                        }
-
-                        // -------------------------------
                         // Start worker Activity (Span)
                         // -------------------------------
                         using (var activity = new Activity("Worker.ProcessVote"))
                         {
-                            // Check if a parent context was successfully parsed
-                            if (parentContext != default)
+                            // --- CRITICAL FIX FOR TRACE STITCHING ---
+                            if (!string.IsNullOrEmpty(vote.traceparent))
                             {
-                                // Link the current Activity (Span) to the incoming Python trace.
-                                activity.SetParentId(parentContext.TraceId, parentContext.SpanId, parentContext.TraceFlags);
+                                // The most reliable way: Tell the Activity object to parse the 
+                                // full W3C string (00-TraceId-SpanId-01) and set itself as the child.
+                                activity.SetParentId(vote.traceparent);
                             }
-                            activity.Start(); // Start the span. OneAgent will automatically pick this up.
+                            // ----------------------------------------
+                            
+                            activity.Start(); // Start the span. OneAgent will pick this up.
 
                             // Log context
+                            // The TraceId here will now match the Python Trace ID if the SetParentId succeeded.
                             Log.ForContext("traceId", activity.TraceId.ToString())
                                .ForContext("spanId", activity.SpanId.ToString())
                                .Information(
