@@ -73,27 +73,26 @@ def cast_vote_api():
             vote = content['vote']
             
             # 1. Get the full W3C header for propagation via Redis
+            # This is now guaranteed to be a valid W3C header string (or a manually generated one).
             traceparent = get_current_traceparent()
             
-            # 2. Extract the raw Trace ID from the TRACEPARENT for local logging
-            # This calls get_current_traceparent() and splits the ID.
+            # 2. Extract the raw Trace ID for local logging 
             trace_id_for_log = get_current_trace_id_raw()
             
             app.logger.info('Vote received via API', extra={
                 'vote': vote, 
                 'voter_id': voter_id,
-                # FIX APPLIED: Log the Trace ID derived from the same trace context
-                # that is successfully being propagated to Redis.
+                # Log the Trace ID derived from the guaranteed trace context.
                 'traceparent_generated': trace_id_for_log if trace_id_for_log else "null" 
             })
 
             redis = get_redis()
             
-            # Inject the full W3C Trace Context into Redis Payload
+            # Inject the final, guaranteed Trace Context into Redis Payload
             data = json.dumps({
                 'voter_id': voter_id, 
                 'vote': vote,
-                'traceparent': traceparent 
+                'traceparent': traceparent # <-- This is guaranteed NOT to be null now
             })
             redis.rpush('votes', data)
 

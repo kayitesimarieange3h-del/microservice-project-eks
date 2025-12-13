@@ -14,6 +14,7 @@ from opentelemetry.propagate import inject
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 import logging
 import random # Required for manual ID generation if agent fails
+import time
 
 # ---------------------------------------
 # CONFIGURE LOGGING
@@ -47,23 +48,30 @@ def start_trace_span(span_name):
 # ---------------------------------------
 def get_current_traceparent():
     """
-    Returns the W3C traceparent header representing the current span, 
-    relying solely on the active trace context.
+    Returns the W3C traceparent header representing the current span.
+    Guarantees a valid W3C header by generating one if the agent fails to provide context.
     """
     propagator = TraceContextTextMapPropagator()
     carrier = {}
     
-    # Use the standard OTEL inject method
+    # Use the standard OTEL inject method to get the current context
     propagator.inject(carrier)
     
     w3c_header = carrier.get("traceparent", None)
     
-    # FIX APPLIED: Remove the manual trace generation and rely on the active span's context.
-    # If the context is missing or all zeros, return None to avoid polluting the trace.
+    # FIX APPLIED HERE: If the context is missing or all zeros, generate a new one.
+    # This prevents 'null' from being sent to Redis.
     if not w3c_header or w3c_header.endswith("-0000000000000000-01"):
-        trace_logger.warning("W3C traceparent missing or zeroed. Propagation disabled.")
-        return None
-        
+        try:
+            # Generate a new W3C header for propagation continuity
+            trace_id = hex(random.getrandbits(128))[2:].zfill(32)
+            span_id = hex(random.getrandbits(64))[2:].zfill(16)
+            w3c_header = f"00-{trace_id}-{span_id}-01"
+            trace_logger.warning(f"Agent context missing; manually generated: {w3c_header}")
+        except Exception as e:
+            trace_logger.error(f"Failed manual trace generation: {e}")
+            return None
+    
     return w3c_header
 
 
@@ -75,8 +83,8 @@ def get_current_trace_id_raw():
     Extracts the raw 32-character Trace ID from the current W3C context 
     for Dynatrace log correlation.
     """
-    # Call get_current_traceparent() to ensure the trace is active first.
-    w3c_traceparent = get_current_traceparent()
+    # Call get_current_traceparent() which is now guaranteed to return a valid W3C header
+    w3c_traceparent = get_current_traceparent() 
     
     if w3c_traceparent:
         try:
@@ -87,4 +95,4 @@ def get_current_trace_id_raw():
             trace_logger.error(f"Failed to parse Trace ID from W3C string: {w3c_traceparent}")
             return None
     
-    return None
+    return None # Should not be reached but remains as a safe final fallback
