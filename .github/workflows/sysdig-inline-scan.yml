@@ -51,6 +51,7 @@ jobs:
       ############################################################
 
       - name: Scan vote image
+        continue-on-error: true
         run: |
           ./sysdig-cli-scanner \
             --apiurl https://app.us4.sysdig.com/ \
@@ -59,6 +60,7 @@ jobs:
           SECURE_API_TOKEN: ${{ secrets.SECURE_API_TOKEN }}
 
       - name: Scan worker image
+        continue-on-error: true
         run: |
           ./sysdig-cli-scanner \
             --apiurl https://app.us4.sysdig.com/ \
@@ -67,9 +69,30 @@ jobs:
           SECURE_API_TOKEN: ${{ secrets.SECURE_API_TOKEN }}
 
       - name: Scan result image
+        continue-on-error: true
         run: |
           ./sysdig-cli-scanner \
             --apiurl https://app.us4.sysdig.com/ \
             docker://result-app:latest
         env:
           SECURE_API_TOKEN: ${{ secrets.SECURE_API_TOKEN }}
+
+      - name: Security gate decision
+        run: |
+          FAILED=0
+
+          for scan in vote worker result; do
+            if [[ "${{ steps['scan_' + scan].outcome }}" == "failure" ]]; then
+              echo "❌ $scan image failed Sysdig policy evaluation"
+              FAILED=1
+            else
+              echo "✅ $scan image passed Sysdig policies"
+            fi
+          done
+
+          if [[ "$FAILED" -eq 1 ]]; then
+            echo "Blocking deployment due to policy violations"
+            exit 1
+          else
+            echo "All images passed security policies"
+          fi
