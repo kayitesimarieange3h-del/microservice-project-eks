@@ -51,27 +51,33 @@ jobs:
 
       - name: Scan vote image
         run: |
+          chmod +x ./sysdig-cli-scanner
           ./sysdig-cli-scanner \
             --apiurl https://app.us4.sysdig.com/ \
-            --token ${{ secrets.SECURE_API_TOKEN }} \
             --output vote-scan.json \
             docker://vote-app:latest
+        env:
+          SECURE_API_TOKEN: ${{ secrets.SECURE_API_TOKEN }}
 
       - name: Scan worker image
         run: |
+          chmod +x ./sysdig-cli-scanner
           ./sysdig-cli-scanner \
             --apiurl https://app.us4.sysdig.com/ \
-            --token ${{ secrets.SECURE_API_TOKEN }} \
             --output worker-scan.json \
             docker://worker-app:latest
+        env:
+          SECURE_API_TOKEN: ${{ secrets.SECURE_API_TOKEN }}
 
       - name: Scan result image
         run: |
+          chmod +x ./sysdig-cli-scanner
           ./sysdig-cli-scanner \
             --apiurl https://app.us4.sysdig.com/ \
-            --token ${{ secrets.SECURE_API_TOKEN }} \
             --output result-scan.json \
             docker://result-app:latest
+        env:
+          SECURE_API_TOKEN: ${{ secrets.SECURE_API_TOKEN }}
 
       ############################################################
       # Upload scan results as GitHub artifacts
