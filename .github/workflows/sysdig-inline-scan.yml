@@ -51,6 +51,7 @@ jobs:
       ############################################################
 
       - name: Scan vote image
+        id: scan_vote
         continue-on-error: true
         run: |
           ./sysdig-cli-scanner \
@@ -60,6 +61,7 @@ jobs:
           SECURE_API_TOKEN: ${{ secrets.SECURE_API_TOKEN }}
 
       - name: Scan worker image
+        id: scan_worker
         continue-on-error: true
         run: |
           ./sysdig-cli-scanner \
@@ -69,6 +71,7 @@ jobs:
           SECURE_API_TOKEN: ${{ secrets.SECURE_API_TOKEN }}
 
       - name: Scan result image
+        id: scan_result
         continue-on-error: true
         run: |
           ./sysdig-cli-scanner \
@@ -77,22 +80,21 @@ jobs:
         env:
           SECURE_API_TOKEN: ${{ secrets.SECURE_API_TOKEN }}
 
-      - name: Security gate decision
+      ############################################################
+      # Final Security Gate (Fail AFTER all scans)
+      ############################################################
+      
+      - name: Evaluate Sysdig scan results
         run: |
-          FAILED=0
+          echo "Vote scan result:   ${{ steps.scan_vote.outcome }}"
+          echo "Worker scan result: ${{ steps.scan_worker.outcome }}"
+          echo "Result scan result: ${{ steps.scan_result.outcome }}"
 
-          for scan in vote worker result; do
-            if [[ "${{ steps['scan_' + scan].outcome }}" == "failure" ]]; then
-              echo "❌ $scan image failed Sysdig policy evaluation"
-              FAILED=1
-            else
-              echo "✅ $scan image passed Sysdig policies"
-            fi
-          done
-
-          if [[ "$FAILED" -eq 1 ]]; then
-            echo "Blocking deployment due to policy violations"
+          if [[ "${{ steps.scan_vote.outcome }}" == "failure" || \
+                "${{ steps.scan_worker.outcome }}" == "failure" || \
+                "${{ steps.scan_result.outcome }}" == "failure" ]]; then
+            echo "❌ One or more images failed Sysdig policy evaluation"
             exit 1
           else
-            echo "All images passed security policies"
+            echo "✅ All images passed Sysdig policy evaluation"
           fi
