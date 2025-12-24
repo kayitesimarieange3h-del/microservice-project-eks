@@ -4,7 +4,7 @@ trigger:
       - main
 
 pool:
-  vmImage: 'azure2agent'
+  name: 'azure2agent'
 
 steps:
 - script: echo "Pipeline triggered from GitHub commit"
