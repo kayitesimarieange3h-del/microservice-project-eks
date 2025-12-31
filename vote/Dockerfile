@@ -22,11 +22,23 @@ CMD ["python", "app.py"]
 # final defines the stage that will bundle the application for production
 FROM base AS final
 
+# Create non-root user
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
+
 # Copy our code from the current folder to the working directory inside the container
 COPY . .
 
+# Change ownership to non-root user
+RUN chown -R appuser:appgroup /usr/local/app
+
+# Switch to non-root user
+USER appuser
+
 # Make port 80 available for links and/or publish
 EXPOSE 80
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost/ || exit 1
 
 # Define our command to be run when launching the container
 CMD ["gunicorn", "app:app", "-b", "0.0.0.0:80", "--log-file", "-", "--access-logfile", "-", "--workers", "4", "--keep-alive", "0"]
