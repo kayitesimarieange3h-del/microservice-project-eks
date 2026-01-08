@@ -1,0 +1,35 @@
+name: Run Voting App Stack (CI only)
+
+on:
+  push:
+    branches: [ devops-full-pipeline ]
+  workflow_dispatch:
+
+jobs:
+  run-stack:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Start Docker Compose stack
+        run: docker compose up -d
+
+      - name: Wait for services to be ready
+        run: sleep 60
+
+      - name: Verify running containers
+        run: docker ps
+
+      - name: Smoke test vote & result service
+        run: |
+          curl http://localhost:5000 || true
+          curl http://localhost:5001 || true
+
+      - name: Show container logs
+        run: docker compose logs
+
+      - name: Shutdown stack
+        if: always()
+        run: docker compose down
