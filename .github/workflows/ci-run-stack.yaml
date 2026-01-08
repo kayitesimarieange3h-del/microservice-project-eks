@@ -24,17 +24,20 @@ jobs:
       - name: Run CI stack
         run: docker compose -f docker-compose.ci.yml up -d
 
+      - name: Wait for services to be ready
+        run: sleep 20
+
       - name: Show running containers
-        run: docker ps
+        run: docker ps -a
 
-      - name: Smoke test
+      - name: Show logs (vote & result)
+        run: docker compose -f docker-compose.ci.yml logs vote result
+
+      - name: Smoke test (inside containers)
         run: |
-          curl http://localhost:5000
-          curl http://localhost:5001
-
-      - name: Logs
-        run: docker compose -f docker-compose.ci.yml logs
+          docker compose -f docker-compose.ci.yml exec -T vote curl -f http://localhost
+          docker compose -f docker-compose.ci.yml exec -T result curl -f http://localhost
 
       - name: Cleanup
         if: always()
-        run: docker compose -f docker-compose.ci.yml down
+        run: docker compose -f docker-compose.ci.yml down -v
