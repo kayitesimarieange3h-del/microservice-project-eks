@@ -1,35 +1,40 @@
-name: Run Voting App Stack (CI only)
+name: Run Voting App (CI)
 
 on:
+  workflow_dispatch:
   push:
     branches: [ devops-full-pipeline ]
-  workflow_dispatch:
 
 jobs:
   run-stack:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Start Docker Compose stack
-        run: docker compose up -d
+      - name: Docker info
+        run: |
+          docker version
+          docker compose version
 
-      - name: Wait for services to be ready
-        run: sleep 60
+      - name: Build CI images
+        run: docker compose -f docker-compose.ci.yml build
 
-      - name: Verify running containers
+      - name: Run CI stack
+        run: docker compose -f docker-compose.ci.yml up -d
+
+      - name: Show running containers
         run: docker ps
 
-      - name: Smoke test vote & result service
+      - name: Smoke test
         run: |
-          curl http://localhost:5000 || true
-          curl http://localhost:5001 || true
+          curl http://localhost:5000
+          curl http://localhost:5001
 
-      - name: Show container logs
-        run: docker compose logs
+      - name: Logs
+        run: docker compose -f docker-compose.ci.yml logs
 
-      - name: Shutdown stack
+      - name: Cleanup
         if: always()
-        run: docker compose down
+        run: docker compose -f docker-compose.ci.yml down
