@@ -15,5 +15,5 @@ spec:
         app: worker
     spec:
       containers:
-      - image: kayitesimarieange3h/worker:v1
+      - image: dkflora/worker:v1
         name: worker
