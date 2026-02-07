@@ -15,7 +15,7 @@ spec:
         app: result
     spec:
       containers:
-      - image: dockersamples/examplevotingapp_result
+      - image: kayitesimarieange3h/result:v1
         name: result
         ports:
         - containerPort: 80
